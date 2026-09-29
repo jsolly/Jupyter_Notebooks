@@ -1,0 +1,41 @@
+# Gitleaks config for this repo. Extends the default rule set.
+title = "Jupyter_Notebooks"
+
+[extend]
+useDefault = true
+
+# Notebooks are JSON, so a double-quoted Python string `api_key = "…"` is stored as
+# `api_key = \"…\"`, and the backslash defeats the default generic-api-key rule (the same line in
+# a .py file is caught). This variant matches the escaped form in cell sources and outputs, with
+# the default rule's value shape (so URLs do not match) and its letters-only allowlist. The
+# optional `\"]` / `']` covers subscripts such as `os.environ['X_TOKEN'] = \"…\"`.
+[[rules]]
+id = "generic-api-key-json-escaped"
+description = "Generic secret in a JSON-escaped double-quoted string (notebook source or output)"
+regex = '''(?i)[\w.-]{0,50}?(?:access|auth|api|credential|creds|key|passw(?:or)?d|secret|token)[\w.-]{0,20}(?:(?:\\"|')\]?)?\s*(?:=|:)\s*\\"([\w.=-]{10,150}|[a-z0-9][a-z0-9+/]{11,}={0,3})\\"'''
+secretGroup = 1
+entropy = 3.5
+keywords = ["access", "auth", "api", "credential", "creds", "key", "passw", "secret", "token"]
+[[rules.allowlists]]
+regexes = ['''^[a-zA-Z_.-]+$''']
+
+# planetary_computer.sign() (stac_landsat.ipynb) produces Azure SAS URLs, and no default rule knows
+# `sig=`. Also matches the HTML-escaped (`&amp;sig=`) and URL-encoded (`%26sig%3D`) forms that rich
+# outputs and tiler `url=` parameters carry.
+[[rules]]
+id = "azure-sas-signature"
+description = "Azure SAS signature in a signed URL"
+regex = '''(?:[?&;]|%26|\\u0026)sig(?:=|%3D)([A-Za-z0-9%+/]{30,}(?:%3D|=){0,2})'''
+secretGroup = 1
+keywords = ["sig=", "sig%3d"]
+
+# The Planetary Computer SDK key (set_subscription_key(...), PC_SDK_SUBSCRIPTION_KEY via os.environ,
+# setdefault, or %env with `=` or a space), the `subscription-key` query parameter and
+# Ocp-Apim-Subscription-Key header, escaped, plainly quoted, or unquoted: 32 hex digits with no
+# prefix a default rule knows, and often below the generic rules' entropy cutoff.
+[[rules]]
+id = "planetary-computer-subscription-key"
+description = "Planetary Computer subscription key"
+regex = '''(?i)subscription[_-]key(?:\\?["'])?\]?(?:\s*[=:,(]|[ \t]+)\s*(?:key\s*=\s*)?(?:\\?["'])?([0-9a-f]{32})\b'''
+secretGroup = 1
+keywords = ["subscription_key", "subscription-key"]
