@@ -50,6 +50,12 @@ The gate treats notebooks as content, not code:
 
 No user-facing web UI: browser smoke is n/a.
 
+## AWS
+
+n/a — no AWS resources or deploy. The Cloud `environment.json` install is skills-only and does not
+run `.cursor/aws-oidc-login.sh`, so the `.cursor/CLOUD.md` "AWS reads" setup (AWS CLI,
+`AWS_PROFILE=agent-readonly`) is absent on this repo's Cloud Agents.
+
 ## Verified-tree CI
 
 PRs run the full CI suite. Post-merge CI reuses a successful PR run only when
